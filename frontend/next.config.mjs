@@ -1,13 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Abaikan error TypeScript saat build
   typescript: {
+    // Tetap abaikan error TS biar build lancar
     ignoreBuildErrors: true,
   },
-  // Abaikan error ESLint saat build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Hapus blok 'eslint' karena di Next.js 16 settingnya beda dan bikin warning
 };
 
 export default nextConfig;
