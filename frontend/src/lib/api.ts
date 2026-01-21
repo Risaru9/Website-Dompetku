@@ -1,20 +1,25 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-// Pastikan URL Backend benar
-const BASE_URL = "http://localhost:5000/api"; 
+// --- PERBAIKAN 1: URL DINAMIS ---
+// Gunakan Environment Variable. Jika di Vercel, dia pakai link Vercel. 
+// Jika di laptop (dev), dia baru pakai localhost.
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"; 
 
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
+  // --- PERBAIKAN 2: MATIKAN CREDENTIALS ---
+  // Karena backend kita setting "origin: '*'" (Boleh semua), 
+  // maka browser MELARANG withCredentials: true.
+  // Kita ubah jadi false agar tidak kena blokir CORS.
+  withCredentials: false, 
 });
 
 api.interceptors.request.use(
   (config) => {
-    // --- PERUBAHAN DI SINI ---
     // 1. Coba cari di Cookie dulu
     let token = Cookies.get("token");
 
@@ -23,13 +28,14 @@ api.interceptors.request.use(
       token = localStorage.getItem("token") || undefined;
     }
 
-    // LOG DETEKTIF
+    // LOG DETEKTIF (Bagus untuk debugging)
     console.log(`[API REQUEST] Ke: ${config.url}`);
+    
     if (token) {
-        console.log(`[TOKEN FOUND] Token ditemukan! (Panjang: ${token.length})`);
+        // console.log(`[TOKEN FOUND] Token siap dikirim!`); // Opsional biar console bersih
         config.headers.Authorization = `Bearer ${token}`;
     } else {
-        console.log(`[TOKEN MISSING] Sudah cari di Cookie & LocalStorage tapi nihil.`);
+        console.log(`[TOKEN MISSING] User belum login / Token tidak ada.`);
     }
 
     return config;
@@ -42,7 +48,6 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Biarkan error lewat agar bisa didebug, jangan redirect otomatis dulu
     return Promise.reject(error);
   }
 );
