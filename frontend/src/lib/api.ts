@@ -1,6 +1,9 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+// --- PERBAIKAN UTAMA: HARDCODE LINK BACKEND VERCEL ---
+// Pastikan link ini SAMA PERSIS dengan link backend Anda yang sudah hijau di Vercel.
+// Jangan ada spasi di ujungnya.
 const BASE_URL = "https://dompetkuapi.vercel.app/api";
 
 export const api = axios.create({
@@ -8,26 +11,21 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: false,
+  // Wajib false karena backend kita setting origin: '*'
+  withCredentials: false, 
 });
 
 api.interceptors.request.use(
   (config) => {
-    // 1. Coba cari di Cookie dulu
+    // 1. Ambil token dari Cookie atau LocalStorage
     let token = Cookies.get("token");
-
-    // 2. Kalau di Cookie kosong, CARI DI LOCALSTORAGE
     if (!token && typeof window !== "undefined") {
       token = localStorage.getItem("token") || undefined;
     }
 
-    // LOG DETEKTIF
-    console.log(`[API REQUEST] Ke: ${config.url}`);
-    
+    // 2. Tempel token jika ada
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    } else {
-        console.log(`[TOKEN MISSING] User belum login / Token tidak ada.`);
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
