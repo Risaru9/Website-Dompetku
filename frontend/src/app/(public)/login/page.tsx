@@ -9,7 +9,8 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button"; 
 import { Mail, Lock, Eye, EyeOff, ChevronLeft, Loader2 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast"; 
-import Cookies from "js-cookie"; 
+import Cookies from "js-cookie";
+import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -20,66 +21,66 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      // 1. Bersihkan Data Lama
-      Cookies.remove("token", { path: '/' });
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+  try {
+    // 1. Bersihkan session lama
+    Cookies.remove("token", { path: "/" });
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-      // 2. Fetch Backend
-      const res = await fetch("/api/users/login", { 
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    // 2. Call BACKEND LANGSUNG (BENER)
+    const res = await api.post("/users/login", {
+      email,
+      password,
+    });
 
-      const data = await res.json();
+    const data = res.data;
 
-      if (!res.ok) {
-        toast.error(data.message || "Login gagal");
-        setLoading(false);
-        return;
-      }
+    const finalToken = data.token || data.data?.token;
+    const finalUser = data.user || data.data?.user;
 
-      const finalToken = data.token || data.data?.token;
-      const finalUser = data.user || data.data?.user;
-
-      if (!finalToken) {
-        toast.error("Token tidak ditemukan");
-        setLoading(false);
-        return;
-      }
-
-      // ✅ FIX UTAMA: SIMPAN DI DUA TEMPAT
-      // 1. Simpan Cookie (Untuk Middleware Next.js)
-      Cookies.set("token", finalToken, { expires: 1, path: '/' });
-      
-      // 2. Simpan LocalStorage (Untuk useAuth / React State agar tidak logout sendiri)
-      localStorage.setItem("token", finalToken);
-      localStorage.setItem("user", JSON.stringify(finalUser));
-
-      // 3. Update State Global
-      // Pastikan fungsi login() di useAuth Anda tidak menghapus cookie!
-      login(finalToken, finalUser);
-
-      toast.success(`Selamat datang, ${finalUser.name || 'User'}! 👋`);
-
-      // 4. Redirect
-      setTimeout(() => {
-        router.refresh(); 
-        router.replace("/dashboard");
-      }, 1000);
-
-    } catch (err: any) {
-      console.error("LOGIN ERROR:", err);
-      toast.error("Terjadi kesalahan sistem");
+    if (!finalToken || !finalUser) {
+      toast.error("Login gagal: data tidak lengkap");
       setLoading(false);
+      return;
     }
-  };
+
+    // 3. Simpan Token
+    Cookies.set("token", finalToken, {
+      expires: 1,
+      path: "/",
+      sameSite: "lax",
+    });
+
+    localStorage.setItem("token", finalToken);
+    localStorage.setItem("user", JSON.stringify(finalUser));
+
+    // 4. Update Auth Context
+    login(finalToken, finalUser);
+
+    toast.success(`Selamat datang, ${finalUser.name}! 👋`);
+
+    // 5. Redirect
+    setTimeout(() => {
+      router.refresh();
+      router.replace("/dashboard");
+    }, 1000);
+
+  } catch (err: any) {
+    console.error("LOGIN ERROR:", err);
+
+    toast.error(
+      err?.response?.data?.message ||
+      "Email atau password salah"
+    );
+
+    setLoading(false);
+  }
+};
+
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 bg-gray-50 relative font-sans">
