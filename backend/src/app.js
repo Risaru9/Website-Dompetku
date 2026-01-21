@@ -57,3 +57,5 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
+//menambahkan router ini agar bisa dibaca oleh vercel
