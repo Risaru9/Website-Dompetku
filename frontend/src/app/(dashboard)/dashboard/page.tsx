@@ -2,28 +2,11 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from "recharts";
 import { 
-  Wallet, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle,
-  AlertCircle, // Icon baru untuk Warning
-  Settings,
-  X,
-  Save,
-  Loader2,
-  MoreHorizontal,
-  ArrowUpRight,
-  ArrowDownLeft,
-  Lightbulb
+  Wallet, TrendingUp, TrendingDown, AlertTriangle, AlertCircle, 
+  Settings, X, Save, Loader2, MoreHorizontal, ArrowUpRight, ArrowDownLeft 
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSummary } from "@/hooks/useSummary";
@@ -40,6 +23,45 @@ const RANGE_OPTIONS = [
   { label: "Semua", value: "all" },
 ];
 
+// --- 1. KOMPONEN SKELETON (LOADING STATIS) ---
+const SkeletonCard = () => (
+  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-40 animate-pulse">
+    <div className="h-10 w-10 bg-slate-200 rounded-lg mb-4"></div>
+    <div className="h-4 w-32 bg-slate-200 rounded mb-2"></div>
+    <div className="h-8 w-48 bg-slate-200 rounded"></div>
+  </div>
+);
+
+const SkeletonChart = () => (
+  <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-[400px] animate-pulse">
+    <div className="flex justify-between mb-6">
+      <div className="h-6 w-32 bg-slate-200 rounded"></div>
+      <div className="h-6 w-48 bg-slate-200 rounded"></div>
+    </div>
+    <div className="h-[300px] bg-slate-100 rounded-xl w-full"></div>
+  </div>
+);
+
+const SkeletonList = () => (
+  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-[400px] animate-pulse">
+    <div className="h-6 w-32 bg-slate-200 rounded mb-6"></div>
+    <div className="space-y-4">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex justify-between items-center">
+           <div className="flex gap-4">
+              <div className="h-10 w-10 bg-slate-200 rounded-xl"></div>
+              <div>
+                <div className="h-4 w-24 bg-slate-200 rounded mb-1"></div>
+                <div className="h-3 w-16 bg-slate-200 rounded"></div>
+              </div>
+           </div>
+           <div className="h-4 w-20 bg-slate-200 rounded"></div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   
@@ -48,10 +70,10 @@ export default function DashboardPage() {
   const [limitInput, setLimitInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   
-  // Ref untuk melacak status notifikasi terakhir agar tidak spam
+  // Ref notifikasi
   const notificationStatusRef = useRef<"none" | "warning" | "danger">("none");
 
-  // 1. INIT STATE DARI LOCALSTORAGE
+  // Init State dari LocalStorage
   const [saldoLimit, setSaldoLimit] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('saldoLimit');
@@ -64,13 +86,12 @@ export default function DashboardPage() {
   const { data: cashflow, loading: cashflowLoading } = useCashflow(range);
   const { data: allTransactions, loading: txLoading } = useTransactions();
 
-  // 2. FETCH PROFILE (SINKRONISASI SERVER)
+  // Fetch Limit Profil
   useEffect(() => {
     const fetchLimit = async () => {
       try {
         const res = await api.get(`/users/profile?t=${new Date().getTime()}`);
         const serverLimit = res.data.saldoLimit;
-        
         if (serverLimit && serverLimit > 0) {
           setSaldoLimit(serverLimit);
           localStorage.setItem('saldoLimit', String(serverLimit));
@@ -86,44 +107,25 @@ export default function DashboardPage() {
   const totalExpense = summary?.totalExpense ?? 0;
   const balance = summary?.balance ?? 0;
 
-  // --- LOGIKA BARU: ZONA BAHAYA VS ZONA WARNING ---
-  // Kita buat buffer 20%. Contoh: Limit 1jt. Warning aktif jika saldo antara 1jt s/d 1.2jt.
+  // Logika Warning
   const warningThreshold = saldoLimit + (saldoLimit * 0.20); 
-
-  // KUNING: Saldo di atas limit TAPI di bawah threshold (Mendekati)
   const isWarning = saldoLimit > 0 && balance >= saldoLimit && balance <= warningThreshold;
-
-  // MERAH: Saldo benar-benar di bawah limit
   const isDanger = saldoLimit > 0 && balance < saldoLimit;
 
-  // 3. TRIGGER NOTIFIKASI TOAST (MERAH & KUNING)
+  // Trigger Notifikasi
   useEffect(() => {
     if (!summaryLoading && saldoLimit > 0) {
-      
-      // KONDISI MERAH (BAHAYA)
       if (isDanger) {
         if (notificationStatusRef.current !== "danger") {
-          toast.error(`BAHAYA! Saldo (${formatRupiah(balance)}) di bawah batas aman!`, {
-            duration: 6000,
-            icon: '🚨',
-            style: { border: '1px solid #F43F5E', color: '#BE123C' },
-          });
+          toast.error(`BAHAYA! Saldo di bawah batas aman!`, { duration: 6000, icon: '🚨' });
           notificationStatusRef.current = "danger";
         }
-      } 
-      // KONDISI KUNING (WARNING)
-      else if (isWarning) {
+      } else if (isWarning) {
         if (notificationStatusRef.current !== "warning") {
-          toast(`Hati-hati! Saldo mendekati batas aman.`, {
-            duration: 5000,
-            icon: '⚠️',
-            style: { border: '1px solid #EAB308', color: '#854D0E', backgroundColor: '#FEFCE8' },
-          });
+          toast(`Hati-hati! Saldo mendekati batas aman.`, { duration: 5000, icon: '⚠️' });
           notificationStatusRef.current = "warning";
         }
-      } 
-      // KONDISI AMAN
-      else {
+      } else {
         notificationStatusRef.current = "none";
       }
     }
@@ -145,32 +147,29 @@ export default function DashboardPage() {
     setIsSettingOpen(true);
   };
 
-  const handleUpdateLimit = async (e) => {
+  const handleUpdateLimit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
       const newVal = Number(limitInput);
       await api.put("/users/saldo-limit", { saldoLimit: newVal });
-      
       setSaldoLimit(newVal);
       localStorage.setItem('saldoLimit', String(newVal));
-      
-      notificationStatusRef.current = "none"; // Reset status notifikasi saat limit diubah
+      notificationStatusRef.current = "none"; 
       toast.success("Batas aman saldo diperbarui");
       setIsSettingOpen(false);
     } catch (error) {
-      // Fallback local storage jika server error
       const newVal = Number(limitInput);
       setSaldoLimit(newVal);
       localStorage.setItem('saldoLimit', String(newVal));
-      toast.error("Disimpan di browser (Server sibuk)");
+      toast.error("Disimpan lokal (Server sibuk)");
       setIsSettingOpen(false);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const formatYAxis = (value) => {
+  const formatYAxis = (value: number) => {
     if (value === 0) return "0";
     if (value >= 1000000000) return `Rp ${(value / 1000000000).toFixed(1).replace(/\.0$/, '')}M`;
     if (value >= 1000000) return `Rp ${(value / 1000000).toFixed(1).replace(/\.0$/, '')}jt`;
@@ -178,9 +177,33 @@ export default function DashboardPage() {
     return `Rp ${value}`;
   };
 
-  if (authLoading) return <div className="h-screen flex justify-center items-center"><Loader2 className="animate-spin"/></div>;
+  // --- 2. TAMPILAN LOADING SKELETON (EFEK CEPAT) ---
+  // Jika Auth masih loading, tampilkan kerangka halaman daripada layar putih/spinner
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] p-8 font-sans">
+        {/* Skeleton Header */}
+        <div className="mb-8 h-10 w-64 bg-slate-200 rounded animate-pulse"></div>
+        
+        {/* Skeleton 3 Kartu Atas */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
+           <SkeletonCard />
+           <SkeletonCard />
+           <SkeletonCard />
+        </div>
+
+        {/* Skeleton Chart & List */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+           <SkeletonChart />
+           <SkeletonList />
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) return null;
 
+  // --- 3. TAMPILAN ASLI (DASHBOARD) ---
   return (
     <div className="min-h-screen bg-[#F8F9FA] p-8 font-sans text-slate-800 relative">
       
@@ -204,34 +227,23 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* --- ALERT BANNER LOGIC --- */}
-      
-      {/* 1. ALERT MERAH (BAHAYA) */}
+      {/* ALERT BANNER */}
       {isDanger && (
         <div className="mb-8 bg-rose-50 border border-rose-100 rounded-2xl p-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
-          <div className="bg-rose-100 p-2 rounded-lg text-rose-600 shrink-0">
-            <AlertTriangle size={24} />
-          </div>
+          <div className="bg-rose-100 p-2 rounded-lg text-rose-600 shrink-0"><AlertTriangle size={24} /></div>
           <div>
             <h3 className="font-bold text-rose-700 text-lg">Peringatan: Saldo Kritis!</h3>
-            <p className="text-rose-600 text-sm mt-1">
-              Sisa saldo Anda <strong>{formatRupiah(balance)}</strong>, sudah melewati batas aman ({formatRupiah(saldoLimit)}).
-            </p>
+            <p className="text-rose-600 text-sm mt-1">Sisa saldo Anda <strong>{formatRupiah(balance)}</strong>, di bawah batas aman.</p>
           </div>
         </div>
       )}
 
-      {/* 2. ALERT KUNING (WARNING / MENDEKATI) */}
       {isWarning && !isDanger && (
         <div className="mb-8 bg-yellow-50 border border-yellow-100 rounded-2xl p-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
-          <div className="bg-yellow-100 p-2 rounded-lg text-yellow-600 shrink-0">
-            <AlertCircle size={24} />
-          </div>
+          <div className="bg-yellow-100 p-2 rounded-lg text-yellow-600 shrink-0"><AlertCircle size={24} /></div>
           <div>
             <h3 className="font-bold text-yellow-700 text-lg">Hati-hati: Mendekati Batas!</h3>
-            <p className="text-yellow-700 text-sm mt-1">
-              Saldo Anda <strong>{formatRupiah(balance)}</strong> hampir menyentuh batas aman ({formatRupiah(saldoLimit)}). Mulai berhemat!
-            </p>
+            <p className="text-yellow-700 text-sm mt-1">Saldo Anda hampir menyentuh batas aman.</p>
           </div>
         </div>
       )}
@@ -245,7 +257,7 @@ export default function DashboardPage() {
           <div>
             <p className="text-sm font-medium text-slate-500">Total Pemasukan</p>
             <h3 className="text-2xl font-bold text-emerald-600 mt-1">
-              {summaryLoading ? "..." : formatRupiah(totalIncome)}
+              {summaryLoading ? <div className="h-8 w-24 bg-slate-100 animate-pulse rounded"></div> : formatRupiah(totalIncome)}
             </h3>
           </div>
         </div>
@@ -257,12 +269,11 @@ export default function DashboardPage() {
           <div>
             <p className="text-sm font-medium text-slate-500">Total Pengeluaran</p>
             <h3 className="text-2xl font-bold text-rose-600 mt-1">
-              {summaryLoading ? "..." : formatRupiah(totalExpense)}
+              {summaryLoading ? <div className="h-8 w-24 bg-slate-100 animate-pulse rounded"></div> : formatRupiah(totalExpense)}
             </h3>
           </div>
         </div>
 
-        {/* SALDO CARD DENGAN WARNA DINAMIS */}
         <div className={`bg-white p-6 rounded-2xl border shadow-sm flex flex-col justify-between h-40 relative overflow-hidden transition-colors duration-300
           ${isDanger ? 'border-rose-200 bg-rose-50/30' : isWarning ? 'border-yellow-200 bg-yellow-50/30' : 'border-slate-100'}
         `}>
@@ -273,14 +284,10 @@ export default function DashboardPage() {
           </div>
           <div className="z-10">
             <p className="text-sm font-medium text-slate-500">Saldo Saat Ini</p>
-            <h3 className={`text-2xl font-bold mt-1 
-              ${isDanger ? 'text-rose-600' : isWarning ? 'text-yellow-600' : 'text-blue-600'}
-            `}>
-              {summaryLoading ? "..." : formatRupiah(balance)}
+            <h3 className={`text-2xl font-bold mt-1 ${isDanger ? 'text-rose-600' : isWarning ? 'text-yellow-600' : 'text-blue-600'}`}>
+              {summaryLoading ? <div className="h-8 w-24 bg-slate-100 animate-pulse rounded"></div> : formatRupiah(balance)}
             </h3>
-            <p className="text-[10px] text-slate-400 mt-1">
-              Batas Aman: {formatRupiah(saldoLimit)}
-            </p>
+            <p className="text-[10px] text-slate-400 mt-1">Batas Aman: {formatRupiah(saldoLimit)}</p>
           </div>
         </div>
       </div>
@@ -293,9 +300,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Arus Keuangan</h2>
-              <p className="text-sm text-slate-500">
-                Pemasukan (Sumbu Kiri) vs Pengeluaran (Sumbu Kanan)
-              </p>
+              <p className="text-sm text-slate-500">Pemasukan (Sumbu Kiri) vs Pengeluaran (Sumbu Kanan)</p>
             </div>
             
             <div className="flex bg-slate-50 p-1 rounded-lg">
@@ -304,9 +309,7 @@ export default function DashboardPage() {
                   key={opt.value}
                   onClick={() => setRange(opt.value)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    range === opt.value
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-900"
+                    range === opt.value ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-900"
                   }`}
                 >
                   {opt.label}
@@ -317,9 +320,10 @@ export default function DashboardPage() {
 
           <div className="h-[300px] w-full">
             {cashflowLoading ? (
-              <div className="h-full flex items-center justify-center text-slate-400">
-                Memuat Grafik...
-              </div>
+               // Loading dalam Chart (Skeleton Halus)
+               <div className="h-full w-full bg-slate-50 rounded-xl animate-pulse flex items-center justify-center text-slate-300">
+                  Memuat data grafik...
+               </div>
             ) : chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
@@ -334,14 +338,10 @@ export default function DashboardPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} tickLine={false} interval={0} angle={-30} textAnchor="end" height={60} tick={{fontSize: 10, fill: '#64748b'}} dy={10}
-                    tickFormatter={(value) => range === '1m' ? value.split(' ')[0] : value}
-                  />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} interval={0} angle={-30} textAnchor="end" height={60} tick={{fontSize: 10, fill: '#64748b'}} dy={10} tickFormatter={(value) => range === '1m' ? value.split(' ')[0] : value} />
                   <YAxis yAxisId="incomeAxis" orientation="left" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#10b981'}} tickFormatter={formatYAxis} width={80} />
                   <YAxis yAxisId="expenseAxis" orientation="right" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#f43f5e'}} tickFormatter={formatYAxis} width={80} />
-                  <Tooltip formatter={(value) => formatRupiah(value)} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                  <Tooltip formatter={(value: number) => formatRupiah(value)} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                   <Area yAxisId="incomeAxis" type="monotone" dataKey="income" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" name="Pemasukan" />
                   <Area yAxisId="expenseAxis" type="monotone" dataKey="expense" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" name="Pengeluaran" />
                 </AreaChart>
@@ -367,25 +367,30 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-4 flex-1 overflow-auto">
             {txLoading ? (
-              <div className="text-center text-sm text-slate-400 py-10">Memuat transaksi...</div>
+               // Loading List (Skeleton)
+               <div className="space-y-4">
+                 {[1,2,3,4].map(i => (
+                    <div key={i} className="flex gap-4 animate-pulse">
+                      <div className="h-10 w-10 bg-slate-100 rounded-xl"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-24 bg-slate-100 rounded"></div>
+                        <div className="h-3 w-12 bg-slate-100 rounded"></div>
+                      </div>
+                    </div>
+                 ))}
+               </div>
             ) : recentTransactions.length === 0 ? (
               <div className="text-center text-sm text-slate-400 py-10">Belum ada transaksi</div>
             ) : (
               recentTransactions.map((tx) => (
                 <div key={tx.id} className="flex items-center justify-between group">
                   <div className="flex items-center gap-4">
-                    <div className={`h-10 w-10 flex items-center justify-center rounded-xl ${
-                      tx.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-                    }`}>
+                    <div className={`h-10 w-10 flex items-center justify-center rounded-xl ${tx.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                       {tx.type === 'INCOME' ? <ArrowUpRight size={18} /> : <ArrowDownLeft size={18} />}
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors capitalize">
-                          {tx.description || "Tanpa Keterangan"}
-                        </p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(tx.date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-                      </p>
+                        <p className="text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors capitalize">{tx.description || "Tanpa Keterangan"}</p>
+                      <p className="text-xs text-slate-400">{new Date(tx.date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
                     </div>
                   </div>
                   <p className={`text-sm font-bold ${tx.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
@@ -404,26 +409,20 @@ export default function DashboardPage() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="font-bold text-slate-800">Atur Batas Aman</h3>
-              <button onClick={() => setIsSettingOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={20} />
-              </button>
+              <button onClick={() => setIsSettingOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
             </div>
             <form onSubmit={handleUpdateLimit} className="p-6">
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-slate-500 mb-2">Minimal Saldo (Rp)</label>
                 <input 
-                  type="number" 
-                  value={limitInput}
-                  onChange={(e) => setLimitInput(e.target.value)}
+                  type="number" value={limitInput} onChange={(e) => setLimitInput(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-slate-900 focus:outline-none font-bold text-lg"
-                  placeholder="0"
-                  min="0"
+                  placeholder="0" min="0"
                 />
                 <p className="text-xs text-slate-400 mt-2">Peringatan KUNING akan muncul jika saldo mendekati angka ini (selisih 20%).</p>
               </div>
               <button 
-                type="submit" 
-                disabled={isSaving}
+                type="submit" disabled={isSaving}
                 className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
               >
                 {isSaving ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Simpan Pengaturan</>}

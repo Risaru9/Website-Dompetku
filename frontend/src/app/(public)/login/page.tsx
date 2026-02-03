@@ -61,7 +61,10 @@ export default function LoginPage() {
     // 4. Update Auth Context
     login(finalToken, finalUser);
 
-    toast.success(`Selamat datang, ${finalUser.name}! 👋`);
+    toast.success(`Selamat datang, ${finalUser.name}!`, , {
+      duration: 4000, // Hilang otomatis dalam 4 detik
+      position: "top-center"
+    });
 
     // 5. Redirect
     setTimeout(() => {
