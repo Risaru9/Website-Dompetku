@@ -8,7 +8,7 @@ import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";  
 import Button from "@/components/ui/Button"; 
 import { Mail, Lock, Eye, EyeOff, ChevronLeft, Loader2 } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast"; 
+import toast from "react-hot-toast"; 
 import Cookies from "js-cookie";
 import { api } from "@/lib/api";
 
@@ -21,75 +21,63 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    // 1. Bersihkan session lama
-    Cookies.remove("token", { path: "/" });
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    try {
+      Cookies.remove("token", { path: "/" });
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
 
-    // 2. Call BACKEND LANGSUNG (BENER)
-    const res = await api.post("/users/login", {
-      email,
-      password,
-    });
+      const res = await api.post("/users/login", {
+        email,
+        password,
+      });
 
-    const data = res.data;
+      const data = res.data;
+      const finalToken = data.token || data.data?.token;
+      const finalUser = data.user || data.data?.user;
 
-    const finalToken = data.token || data.data?.token;
-    const finalUser = data.user || data.data?.user;
+      if (!finalToken || !finalUser) {
+        toast.error("Login gagal: data tidak lengkap");
+        setLoading(false);
+        return;
+      }
 
-    if (!finalToken || !finalUser) {
-      toast.error("Login gagal: data tidak lengkap");
+      Cookies.set("token", finalToken, {
+        expires: 1,
+        path: "/",
+        sameSite: "lax",
+      });
+
+      localStorage.setItem("token", finalToken);
+      localStorage.setItem("user", JSON.stringify(finalUser));
+
+      login(finalToken, finalUser);
+
+      toast.success(`Selamat datang, ${finalUser.name}!`, {
+        duration: 4000, 
+        position: "top-center"
+      });
+
+      setTimeout(() => {
+        router.refresh();
+        router.replace("/dashboard");
+      }, 1000);
+
+    } catch (err: any) {
+      console.error("LOGIN ERROR:", err);
+      toast.error(
+        err?.response?.data?.message || "Email atau password salah"
+      );
       setLoading(false);
-      return;
     }
-
-    // 3. Simpan Token
-    Cookies.set("token", finalToken, {
-      expires: 1,
-      path: "/",
-      sameSite: "lax",
-    });
-
-    localStorage.setItem("token", finalToken);
-    localStorage.setItem("user", JSON.stringify(finalUser));
-
-    // 4. Update Auth Context
-    login(finalToken, finalUser);
-
-    toast.success(`Selamat datang, ${finalUser.name}!`, , {
-      duration: 4000, // Hilang otomatis dalam 4 detik
-      position: "top-center"
-    });
-
-    // 5. Redirect
-    setTimeout(() => {
-      router.refresh();
-      router.replace("/dashboard");
-    }, 1000);
-
-  } catch (err: any) {
-    console.error("LOGIN ERROR:", err);
-
-    toast.error(
-      err?.response?.data?.message ||
-      "Email atau password salah"
-    );
-
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 bg-gray-50 relative font-sans">
-      <Toaster position="top-center" />
-      {/* ... (SISA KODE TAMPILAN SAMA SEPERTI SEBELUMNYA) ... */}
-      
-      {/* Tombol Kembali */}
+
       <div className="absolute top-8 left-4 md:left-8 z-10">
         <Link 
           href="/" 

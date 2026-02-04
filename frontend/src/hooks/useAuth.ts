@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie"; // 👈 WAJIB IMPORT INI
+import Cookies from "js-cookie"; 
 
 interface User {
   id: number;
