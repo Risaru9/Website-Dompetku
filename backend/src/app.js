@@ -4,7 +4,6 @@ const cors = require('cors');
 const helmet = require("helmet");
 const swaggerUi = require("swagger-ui-express");
 
-// Import Routes
 const userRoutes = require("./routers/userRoutes");
 const transactionRoutes = require("./routers/transactionRoutes");
 const summaryRoutes = require("./routers/summaryRoutes");
@@ -12,63 +11,67 @@ const exportRoutes = require("./routers/exportRoutes");
 const swaggerSpec = require("./docs/swagger");
 const goalRoutes = require("./routers/goalRoutes");
 
-// Import Middleware Error
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
 
-// ==========================================
-// 1. SETUP CORS (INI KUNCINYA)
-// ==========================================
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'https://dompetku.vercel.app',
+  'https://dompetku-git-main.vercel.app',
+  process.env.FRONTEND_URL
+];
+
 app.use(cors({
-  origin: true, // Gunakan true agar otomatis mengizinkan origin pengirim
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.error("Blocked by CORS:", origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: true // Ubah ke TRUE agar Cookies/Token bisa lewat
+  credentials: true
 }));
 
-// PERBAIKAN UTAMA (CRASH FIX):
-// Ganti '*' menjadi /(.*)/ agar tidak error "Missing parameter name"
-app.options(/(.*)/, cors());
+app.options('*', cors());
 
-// 2. Middleware Security & Parsing
 app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 3. Test Route (Root Check)
+
 app.get("/", (req, res) => {
   res.status(200).json({ 
     status: "success", 
     message: "Backend Dompetku Berjalan Lancar!",
+    environment: process.env.NODE_ENV || "development",
     timestamp: new Date()
   });
 });
 
-// 4. Routes API 
-// PENTING: Saya tambahkan '/api' di sini agar cocok dengan Frontend Anda
-// Frontend Anda menembak: http://localhost:5000/api/users/...
 app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/summary", summaryRoutes);
 app.use("/api/export", exportRoutes);
 app.use("/api/goals", goalRoutes);
 
-// 5. Dokumentasi Swagger
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// 6. Error Handler (Wajib paling bawah)
 app.use(errorHandler);
 
-// ==========================================
-// 7. START SERVER (INI YANG HILANG)
-// ==========================================
-const PORT = process.env.PORT || 5000;
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`SERVER RUNNING ON PORT ${PORT}`);
+    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
-app.listen(PORT, () => {
-  console.log(`=================================`);
-  console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`);
-  console.log(`=================================`);
-});
+// Export app untuk Vercel (Serverless)
+module.exports = app;
