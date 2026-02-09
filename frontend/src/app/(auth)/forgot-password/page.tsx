@@ -31,9 +31,8 @@ export default function ForgotPasswordPage() {
       }
 
       // Sukses!
-      toast.success("Link reset telah dikirim ke email Anda! Cek Inbox (Mailtrap).", {
-        duration: 5000, // Tampil agak lama biar user baca
-        icon: '📧',
+      toast.success("Link reset telah dikirim! Silakan cek Inbox atau Spam email Anda.", {
+        duration: 5000,
       });
       
       // Opsional: Bersihkan form

@@ -1,16 +1,14 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-
-// --- KITA TULIS LANGSUNG AGAR MENGABAIKAN .ENV YANG SALAH ---
-const BASE_URL = "https://dompetkuapi.vercel.app"; 
+const BASE_URL = process.env.NODE_ENV === "production"
+  ? "https://dompetkuapi.vercel.app"
+  : "http://localhost:5000/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
   timeout: 15000,
-  withCredentials: false, // Wajib false
+  withCredentials: true,
 });
 
 // REQUEST INTERCEPTOR
