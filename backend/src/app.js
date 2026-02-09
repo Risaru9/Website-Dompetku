@@ -20,18 +20,16 @@ const app = express();
 // ==========================================
 // 1. SETUP CORS (INI KUNCINYA)
 // ==========================================
-// Kita setting agar semua domain boleh masuk (*)
-// dan credentials dimatikan agar tidak bentrok.
 app.use(cors({
-  origin: '*', 
+  origin: true, // Gunakan true agar otomatis mengizinkan origin pengirim
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: false 
+  credentials: true // Ubah ke TRUE agar Cookies/Token bisa lewat
 }));
 
-// PENTING: Paksa Express merespon Preflight Request (OPTIONS)
-// Ini sering kali menjadi penyebab error di Vercel
-app.options('*', cors());
+// PERBAIKAN UTAMA (CRASH FIX):
+// Ganti '*' menjadi /(.*)/ agar tidak error "Missing parameter name"
+app.options(/(.*)/, cors());
 
 // 2. Middleware Security & Parsing
 app.use(helmet({
@@ -44,19 +42,19 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
   res.status(200).json({ 
     status: "success", 
-    message: "Backend Dompetku Berjalan Lancar di Vercel!",
+    message: "Backend Dompetku Berjalan Lancar!",
     timestamp: new Date()
   });
 });
 
 // 4. Routes API 
-// Vercel sudah mengarahkan /api ke folder api, 
-// jadi di sini kita tidak perlu menulis /api lagi.
-app.use("/users", userRoutes);
-app.use("/transactions", transactionRoutes);
-app.use("/summary", summaryRoutes);
-app.use("/export", exportRoutes);
-app.use("/goals", goalRoutes);
+// PENTING: Saya tambahkan '/api' di sini agar cocok dengan Frontend Anda
+// Frontend Anda menembak: http://localhost:5000/api/users/...
+app.use("/api/users", userRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/summary", summaryRoutes);
+app.use("/api/export", exportRoutes);
+app.use("/api/goals", goalRoutes);
 
 // 5. Dokumentasi Swagger
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -64,5 +62,13 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // 6. Error Handler (Wajib paling bawah)
 app.use(errorHandler);
 
-// 7. Export App (Wajib untuk Vercel Serverless)
-module.exports = app;
+// ==========================================
+// 7. START SERVER (INI YANG HILANG)
+// ==========================================
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`=================================`);
+  console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`);
+  console.log(`=================================`);
+});

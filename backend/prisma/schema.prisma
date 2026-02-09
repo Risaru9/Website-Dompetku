@@ -17,8 +17,8 @@ model User {
   // Kolom batas aman saldo
   saldoLimit          Int       @default(0)
 
-  passwordResetToken  String?   @unique
-  passwordResetExpires DateTime?
+  resetPasswordToken  String?   @unique // Token unik
+  resetPasswordExpires DateTime? // Batas waktu token (misal 1 jam)
 
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @default(now()) @updatedAt

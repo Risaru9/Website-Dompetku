@@ -1,9 +1,19 @@
+// controllers/userController.js
+const crypto = require('crypto');
 const prisma = require("../config/prisma");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const { successResponse, errorResponse } = require("../utils/response");
+const nodemailer = require("nodemailer");
 
-// 1. REGISTER
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -24,7 +34,7 @@ exports.register = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        saldoLimit: 0 // Default 0
+        saldoLimit: 0
       },
     });
 
@@ -39,7 +49,6 @@ exports.register = async (req, res) => {
   }
 };
 
-// 2. LOGIN (FIX: Sekarang menghasilkan Token)
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -54,22 +63,20 @@ exports.login = async (req, res) => {
       return errorResponse(res, "Email atau password salah", 401);
     }
 
-    // PENTING: Generate Token JWT agar authMiddleware bekerja
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // Kirim token via Cookie (Opsional, untuk keamanan ekstra)
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 hari
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     return successResponse(res, "Login berhasil", {
-      token, // Kirim token ke frontend
+      token,
       user: {
         id: user.id,
         name: user.name,
@@ -83,10 +90,9 @@ exports.login = async (req, res) => {
   }
 };
 
-// 3. GET PROFILE
 exports.getProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // Didapat dari authMiddleware
+    const userId = req.user.id;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -131,14 +137,92 @@ exports.updateSaldoLimit = async (req, res) => {
   }
 };
 
-// 5. PLACEHOLDER: Forgot Password (Agar tidak crash)
 exports.forgotPassword = async (req, res) => {
-    // Nanti diisi logika kirim email
-    return errorResponse(res, "Fitur ini belum diaktifkan", 501);
+  try {
+    const { email } = req.body;
+    
+    console.log("-----------------------------------------");
+    console.log("1. Menerima Request Lupa Password untuk:", email);
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (!user) {
+      console.log("User tidak ditemukan. Mengirim respon palsu.");
+      return successResponse(res, "Jika email terdaftar, link reset telah dikirim.");
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const tokenExpiry = new Date(Date.now() + 3600000); // 1 Jam
+
+    await prisma.user.update({
+      where: { email },
+      data: { resetPasswordToken: resetToken, resetPasswordExpires: tokenExpiry },
+    });
+
+    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+
+    console.log("Mencoba kirim email via GMAIL...");
+
+    const mailOptions = {
+      from: `"Dompetku Support" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Permintaan Reset Password - Dompetku",
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2 style="color: #2563EB;">Reset Password</h2>
+          <p>Klik tombol di bawah ini untuk mereset password Anda:</p>
+          <a href="${resetUrl}" style="background-color: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password Saya</a>
+          <p style="margin-top:20px; color:#666;">Link ini valid selama 1 jam.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    console.log("Email BERHASIL dikirim via Gmail!");
+    return successResponse(res, "Link reset password telah dikirim.");
+
+  } catch (error) {
+    console.error("ERROR SERVER:", error);
+    return errorResponse(res, "Gagal mengirim email", 500);
+  }
 };
 
-// 6. PLACEHOLDER: Reset Password (Agar tidak crash)
 exports.resetPassword = async (req, res) => {
-    // Nanti diisi logika reset password
-    return errorResponse(res, "Fitur ini belum diaktifkan", 501);
+  try {
+    const { token } = req.params;
+    const { password, confirmPassword } = req.body;
+
+    if (password !== confirmPassword) {
+      return errorResponse(res, "Password tidak cocok", 400);
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: { gt: new Date() }, 
+      },
+    });
+
+    if (!user) {
+      return errorResponse(res, "Token tidak valid atau sudah kadaluarsa.", 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    return successResponse(res, "Password berhasil diperbarui! Silakan login.");
+
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    return errorResponse(res, "Gagal mereset password", 500);
+  }
 };
