@@ -1,8 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-const BASE_URL = process.env.NODE_ENV === "production"
-  ? "https://dompetkuapi.vercel.app"
-  : "http://localhost:5000/api";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -11,7 +10,6 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// REQUEST INTERCEPTOR
 api.interceptors.request.use(
   (config) => {
     let token: string | undefined;
@@ -19,7 +17,7 @@ api.interceptors.request.use(
       token = Cookies.get("token") || localStorage.getItem("token") || undefined;
     }
 
-    console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`[API REQUEST] to ${BASE_URL} | ${config.method?.toUpperCase()} ${config.url}`);
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -29,7 +27,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// RESPONSE INTERCEPTOR
 api.interceptors.response.use(
   (response) => response,
   (error) => {
