@@ -1,9 +1,9 @@
 # Dompetku - Personal Finance Manager
 
-![Dompetku Banner](https://via.placeholder.com/1200x400?text=Dompetku+Dashboard+Preview)
+![Dompetku Banner](img/home.png)
 
 **Akses Aplikasi:**
-[https://website-dompetku.vercel.app/dashboard](https://website-dompetku.vercel.app/dashboard)
+[https://website-dompetku.vercel.app](https://website-dompetku.vercel.app)
 
 **Dompetku** adalah aplikasi manajemen keuangan pribadi berbasis web yang dirancang untuk membantu pengguna melacak pemasukan, pengeluaran, dan target tabungan mereka dengan mudah, modern, dan transparan.
 
