@@ -155,13 +155,14 @@ exports.forgotPassword = async (req, res) => {
     const tokenExpiry = new Date(Date.now() + 3600000); // 1 Jam
 
     await prisma.user.update({
-      where: { email },
-      data: { resetPasswordToken: resetToken, resetPasswordExpires: tokenExpiry },
-    });
+          where: { email },
+          data: { resetPasswordToken: resetToken, resetPasswordExpires: tokenExpiry },
+        });
 
-    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
-    console.log("Mencoba kirim email via GMAIL...");
+        console.log("Mencoba kirim email via GMAIL...");
 
     const mailOptions = {
       from: `"Dompetku Support" <${process.env.SMTP_USER}>`,
