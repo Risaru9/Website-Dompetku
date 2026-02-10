@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 // 1. HARDCODE URL (JANGAN PAKAI PROCESS.ENV BIAR TIDAK NYASAR KE LOCALHOST)
-const BASE_URL = "https://dompetkuapi.vercel.app"; 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -10,9 +10,7 @@ export const api = axios.create({
     "Content-Type": "application/json",
   },
   timeout: 15000,
-  // 2. MATIKAN CREDENTIALS (SANGAT PENTING!)
-  // Agar tidak bentrok dengan 'Access-Control-Allow-Origin: *' di backend
-  withCredentials: false, 
+  withCredentials: false, // Sesuai setting CORS backend kamu
 });
 
 api.interceptors.request.use(
