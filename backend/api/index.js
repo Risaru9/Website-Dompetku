@@ -1,4 +1,6 @@
-// api/index.js
-const app = require('../src/app'); // Mengambil aplikasi dari src/app.js
+const app = require('../src/app');
 
-module.exports = app;
+// Vercel serverless function wrapper
+module.exports = (req, res) => {
+  return app(req, res);
+};

@@ -46,9 +46,6 @@ module.exports = app;
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    console.log(`-----------------------------------------`);
-    console.log(`🚀 Backend Dompetku Live!`);
-    console.log(`📡 URL: http://localhost:${PORT}`);
-    console.log(`-----------------------------------------`);
+    console.log(`🚀 Server berjalan di port ${PORT}`);
   });
 }
