@@ -31,7 +31,7 @@ app.use(cors({
   credentials: false
 }));
 
-app.options('*', cors());
+app.options(/(.*)/, cors());
 
 app.use(helmet({
   crossOriginResourcePolicy: false,

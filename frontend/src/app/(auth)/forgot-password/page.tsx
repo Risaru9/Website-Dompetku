@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ChevronLeft, KeyRound, Loader2, Mail } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleReset = async (e: React.FormEvent) => {
+  const handleReset = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -22,8 +22,9 @@ export default function ForgotPasswordPage() {
       toast.success(res.data.message || "Link reset telah dikirim!");
       setEmail("");
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Gagal mengirim email reset.";
-      toast.error(errorMessage);
+      toast.error(
+        err.response?.data?.message || "Gagal mengirim email reset."
+      );
     } finally {
       setLoading(false);
     }
@@ -33,10 +34,9 @@ export default function ForgotPasswordPage() {
     <main className="min-h-screen flex items-center justify-center px-4 bg-gray-50 relative font-sans">
       <Toaster position="top-center" />
 
-      {/* Tombol Kembali */}
       <div className="absolute top-8 left-4 md:left-8">
-        <Link 
-          href="/login" 
+        <Link
+          href="/login"
           className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors bg-white/80 px-4 py-2 rounded-full border border-slate-200 hover:border-slate-400"
         >
           <ChevronLeft size={20} />
@@ -48,10 +48,13 @@ export default function ForgotPasswordPage() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600">
           <KeyRound size={24} />
         </div>
-        
-        <h1 className="text-center text-xl font-bold text-slate-900">Lupa Password?</h1>
+
+        <h1 className="text-center text-xl font-bold text-slate-900">
+          Lupa Password?
+        </h1>
+
         <p className="mt-2 text-center text-sm text-slate-500 max-w-xs mx-auto">
-          Jangan panik. Masukkan email Anda di bawah ini, kami akan mengirimkan link untuk membuat password baru.
+          Masukkan email Anda, kami akan mengirimkan link reset password.
         </p>
 
         <form onSubmit={handleReset} className="mt-6 space-y-4">
@@ -68,7 +71,8 @@ export default function ForgotPasswordPage() {
           <Button disabled={loading}>
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <Loader2 size={18} className="animate-spin" /> Mengirim Email...
+                <Loader2 size={18} className="animate-spin" />
+                Mengirim Email...
               </span>
             ) : (
               "Kirim Link Reset"
@@ -79,6 +83,3 @@ export default function ForgotPasswordPage() {
     </main>
   );
 }
-
-// --- UPDATE PAKSA UNTUK VERCEL (JANGAN DIHAPUS DULU) ---
-// Komentar ini memastikan hash file berubah total.
