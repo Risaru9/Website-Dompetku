@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react"; // Perhatikan import 'use'
+import { useState, use } from "react"; 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Lock, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
@@ -8,15 +8,10 @@ import toast, { Toaster } from "react-hot-toast";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import { api } from "@/lib/api";
 
-// Halaman Dinamis menerima 'params'
 export default function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
   const router = useRouter();
-  
-  // Unwrap params di Next.js 15+ (gunakan hook 'use' jika perlu, atau await di server component)
-  // Untuk Client Component yang aman di berbagai versi, kita bisa akses langsung atau via hook.
-  // Tapi params di sini adalah Promise di Next.js terbaru.
-  // Kita pakai cara aman: ambil token langsung jika sudah tersedia.
   const { token } = use(params); 
 
   const [password, setPassword] = useState("");
@@ -35,19 +30,12 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
     setLoading(true);
 
     try {
-      // Kirim Token + Password Baru ke Backend
-      const res = await fetch(`http://localhost:5000/api/users/reset-password/${token}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, confirmPassword }),
+      await api.post(`/users/reset-password/${token}`, { 
+        password, 
+        confirmPassword 
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Gagal mereset password");
-      }
-
+      // Jika sukses
       toast.success("Berhasil! Password Anda telah diperbarui.", { duration: 3000 });
       
       // Redirect ke Login
@@ -56,7 +44,9 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
       }, 2000);
 
     } catch (err: any) {
-      toast.error(err.message);
+      // Tangkap Error dari Backend
+      const errorMessage = err.response?.data?.message || "Gagal mereset password";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -102,7 +92,7 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
           />
 
           <Button disabled={loading}>
-            {loading ? <><Loader2 className="animate-spin" /> Menyimpan...</> : "Simpan Password Baru"}
+            {loading ? <><Loader2 className="animate-spin" /> Menyimpan</> : "Simpan Password Baru"}
           </Button>
         </form>
       </Card>
