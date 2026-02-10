@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
     } finally {
       setLoading(false);
     }
-  }; 
+  };
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 bg-gray-50 relative font-sans">
@@ -79,3 +79,6 @@ export default function ForgotPasswordPage() {
     </main>
   );
 }
+
+// --- UPDATE PAKSA UNTUK VERCEL (JANGAN DIHAPUS DULU) ---
+// Komentar ini memastikan hash file berubah total.
