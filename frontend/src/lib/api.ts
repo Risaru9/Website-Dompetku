@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 // 1. HARDCODE URL (JANGAN PAKAI PROCESS.ENV BIAR TIDAK NYASAR KE LOCALHOST)
-const BASE_URL = "https://dompetkuapi.vercel.app/api"; 
+const BASE_URL = "https://dompetkuapi.vercel.app"; 
 
 export const api = axios.create({
   baseURL: BASE_URL,
