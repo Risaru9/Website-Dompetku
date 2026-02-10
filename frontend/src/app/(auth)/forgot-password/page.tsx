@@ -17,14 +17,17 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const res = await api.post("/users/forgot-password", { email });
-      toast.success(res.data.message || "Link reset telah dikirim!");
-      setEmail("");
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Gagal mengirim email reset.";
-      toast.error(errorMessage);
-    }
+  try {
+        const res = await api.post("/users/forgot-password", { email });
+        toast.success(res.data.message || "Link reset telah dikirim!");
+        setEmail("");
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || "Gagal mengirim email reset.";
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 bg-gray-50 relative font-sans">

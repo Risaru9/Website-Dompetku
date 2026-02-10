@@ -8,7 +8,9 @@ import toast, { Toaster } from "react-hot-toast";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { api } from "@/lib/api";
+
+// 👇 1. Import API Helper
+import { api } from "@/lib/api"; 
 
 export default function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
   const router = useRouter();
@@ -30,6 +32,7 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
     setLoading(true);
 
     try {
+      // 👇 2. Gunakan api.post (Otomatis deteksi Localhost/Vercel)
       await api.post(`/users/reset-password/${token}`, { 
         password, 
         confirmPassword 
@@ -92,7 +95,7 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
           />
 
           <Button disabled={loading}>
-            {loading ? <><Loader2 className="animate-spin" /> Menyimpan</> : "Simpan Password Baru"}
+            {loading ? <><Loader2 className="animate-spin" /> Menyimpan...</> : "Simpan Password Baru"}
           </Button>
         </form>
       </Card>
