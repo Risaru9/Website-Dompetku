@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, KeyRound, Loader2, Mail } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
-import Card from "@/components/ui/Card";    // Pastikan path ini benar sesuai struktur Anda
-import Input from "@/components/ui/Input";  // Pastikan path ini benar
-import Button from "@/components/ui/Button"; // Pastikan path ini benar
+import { api } from "@/lib/api";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -17,34 +18,13 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      // Tembak Endpoint Backend yang baru kita buat
-      const res = await fetch("http://localhost:5000/api/users/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Gagal mengirim email reset.");
-      }
-
-      // Sukses!
-      toast.success("Link reset telah dikirim! Silakan cek Inbox atau Spam email Anda.", {
-        duration: 5000,
-      });
-      
-      // Opsional: Bersihkan form
+      const res = await api.post("/users/forgot-password", { email });
+      toast.success(res.data.message || "Link reset telah dikirim!");
       setEmail("");
-
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Terjadi kesalahan.");
-    } finally {
-      setLoading(false);
+      const errorMessage = err.response?.data?.message || "Gagal mengirim email reset.";
+      toast.error(errorMessage);
     }
-  };
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 bg-gray-50 relative font-sans">

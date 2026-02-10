@@ -16,10 +16,11 @@ const errorHandler = require("./middlewares/errorHandler");
 const app = express();
 
 const allowedOrigins = [
-  'http://localhost:3000',
+'http://localhost:3000',
   'http://localhost:5000',
   'https://dompetku.vercel.app',
-  'https://dompetku-git-main.vercel.app',
+  'https://website-dompetku-rk0dvdfkp-risaru9s-projects.vercel.app',
+  'https://website-dompetku.vercel.app'
   process.env.FRONTEND_URL
 ];
 
