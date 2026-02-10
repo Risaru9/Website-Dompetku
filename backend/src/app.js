@@ -20,25 +20,18 @@ const allowedOrigins = [
   'http://localhost:5000',
   'https://dompetku.vercel.app',
   'https://website-dompetku-rk0dvdfkp-risaru9s-projects.vercel.app',
-  'https://website-dompetku.vercel.app'
+  'https://website-dompetku.vercel.app',
   process.env.FRONTEND_URL
 ];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.error("Blocked by CORS:", origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: true
+  credentials: false
 }));
 
-app.options(/(.*)/, cors());
+app.options('*', cors());
 
 app.use(helmet({
   crossOriginResourcePolicy: false,
