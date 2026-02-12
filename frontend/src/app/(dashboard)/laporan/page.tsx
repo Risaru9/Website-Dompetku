@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useTransactions } from "@/hooks/useTransactions";
 import { formatRupiah } from "@/lib/format";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 import { 
-  Search, Filter, ArrowUpRight, ArrowDownLeft, 
-  ChevronLeft, ChevronRight, Trash2, Edit, 
+  Search, Filter, 
+  Trash2, Edit, 
   Loader2, X, AlertTriangle, Save
 } from "lucide-react";
 
@@ -40,16 +40,13 @@ export default function LaporanPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // --- LOGIC: FILTERING (SUDAH DIPERBAIKI) ---
+  // --- LOGIC: FILTERING ---
   const filteredData = useMemo(() => {
-    // 🛡️ PENGAMAN ANTI-CRASH
-    // Jika transactions null/undefined, kita pakai array kosong []
     const safeTransactions = Array.isArray(transactions) ? transactions : [];
 
     return safeTransactions.filter((tx) => {
       const term = searchTerm.toLowerCase();
       
-      // Pencarian aman (cek jika description ada isinya)
       const matchSearch = 
         (tx.description && tx.description.toLowerCase().includes(term)) || 
         (tx.category && tx.category.toLowerCase().includes(term));
@@ -73,7 +70,6 @@ export default function LaporanPage() {
   const summary = useMemo(() => {
     let income = 0;
     let expense = 0;
-    // filteredData dijamin array karena perbaikan di atas, jadi aman di-forEach
     filteredData.forEach((tx) => {
       if (tx.type === "INCOME") income += tx.amount;
       else expense += tx.amount;
@@ -81,7 +77,7 @@ export default function LaporanPage() {
     return { income, expense, balance: income - expense };
   }, [filteredData]);
 
-  // FITUR 1: CUSTOM DELETE MODAL LOGIC
+  // FITUR 1: DELETE LOGIC
   const openDeleteModal = (id: number) => {
     setSelectedTxId(id);
     setIsDeleteOpen(true);
@@ -107,9 +103,8 @@ export default function LaporanPage() {
     }
   };
 
-  //FITUR 2: EDIT / UPDATE LOGIC
+  // FITUR 2: EDIT LOGIC
   const openEditModal = (tx: any) => {
-    // Isi form dengan data yang mau diedit
     setEditFormData({
       id: tx.id,
       type: tx.type,
@@ -133,7 +128,7 @@ export default function LaporanPage() {
         date: new Date(editFormData.date).toISOString()
       });
       toast.success("Transaksi berhasil diperbarui!");
-      mutate(); // Refresh data
+      mutate(); 
       setIsEditOpen(false);
     } catch (error: any) {
       console.error(error);
@@ -203,19 +198,10 @@ export default function LaporanPage() {
 
       {/* TABLE */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 px-6 py-4 text-xs font-semibold text-slate-500">
-          <div className="col-span-2">Tanggal</div> 
-          <div className="col-span-2">Jenis</div>
-          <div className="col-span-4">Keterangan</div>
-          <div className="col-span-2 text-right">Nominal</div>
-          <div className="col-span-2 text-center">Aksi</div>
-        </div>
-
-{/* TABLE*/}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* HEADER TABEL - DIPERBAIKI (KATEGORI DITAMBAHKAN) */}
         <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
           <div className="col-span-2">Tanggal</div> 
-          <div className="col-span-2">Kategori</div>
+          <div className="col-span-2">Kategori</div> {/* Ganti Header 'Jenis' jadi 'Kategori' */}
           <div className="col-span-4">Keterangan</div>
           <div className="col-span-2 text-right">Nominal</div>
           <div className="col-span-2 text-center">Aksi</div>
@@ -230,23 +216,29 @@ export default function LaporanPage() {
             filteredData.map((tx) => (
               <div key={tx.id} className="grid grid-cols-12 px-6 py-4 items-center hover:bg-slate-50 transition-colors group">
                 
+                {/* 1. TANGGAL */}
                 <div className="col-span-2 text-sm text-slate-500 font-medium">
                   {new Date(tx.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "2-digit" })}
                 </div>
 
+                {/* 2. KATEGORI & BADGE JENIS (DIPERBAIKI) */}
                 <div className="col-span-2">
-                  <div className="text-sm font-semibold text-slate-700">{tx.category}</div>
-                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium mt-1 ${
-                    tx.type === 'INCOME' ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                  <div className="text-sm font-bold text-slate-800">{tx.category}</div>
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium mt-1 border ${
+                    tx.type === 'INCOME' 
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                      : "bg-rose-50 text-rose-700 border-rose-100"
                   }`}>
                     {tx.type === 'INCOME' ? "Masuk" : "Keluar"}
                   </span>
                 </div>
 
-                <div className="col-span-4 text-sm text-slate-600 truncate pr-4 italic">
-                  {tx.description && tx.description !== "-" ? tx.description : <span className="text-slate-300">Tidak ada keterangan</span>}
+                {/* 3. KETERANGAN */}
+                <div className="col-span-4 text-sm text-slate-600 truncate pr-4">
+                  {tx.description && tx.description !== "-" ? tx.description : <span className="text-slate-300 italic">Tidak ada keterangan</span>}
                 </div>
 
+                {/* 4. NOMINAL */}
                 <div className={`col-span-2 text-right text-sm font-bold ${
                    tx.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'
                 }`}>
@@ -271,7 +263,7 @@ export default function LaporanPage() {
       {/*MODAL 1: KONFIRMASI HAPUS (DELETE)*/}
       {isDeleteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-100 animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-in fade-in zoom-in duration-200">
             <div className="flex flex-col items-center text-center">
               <div className="bg-rose-100 p-3 rounded-full text-rose-600 mb-4">
                 <AlertTriangle size={32} />
@@ -291,7 +283,7 @@ export default function LaporanPage() {
                 <button 
                   onClick={handleConfirmDelete}
                   disabled={isProcessing}
-                  className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-semibold hover:bg-rose-600 shadow-lg shadow-rose-200 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-semibold hover:bg-rose-600 shadow-lg shadow-rose-200 flex items-center justify-center gap-2"
                 >
                   {isProcessing ? <Loader2 size={18} className="animate-spin" /> : "Ya, Hapus"}
                 </button>
@@ -304,7 +296,7 @@ export default function LaporanPage() {
       {/*MODAL 2: EDIT TRANSAKSI */}
       {isEditOpen && editFormData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
             
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
