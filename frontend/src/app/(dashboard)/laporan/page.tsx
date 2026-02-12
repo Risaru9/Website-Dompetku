@@ -198,10 +198,9 @@ export default function LaporanPage() {
 
       {/* TABLE */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* HEADER TABEL - DIPERBAIKI (KATEGORI DITAMBAHKAN) */}
         <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
           <div className="col-span-2">Tanggal</div> 
-          <div className="col-span-2">Kategori</div> {/* Ganti Header 'Jenis' jadi 'Kategori' */}
+          <div className="col-span-2">Kategori</div>
           <div className="col-span-4">Keterangan</div>
           <div className="col-span-2 text-right">Nominal</div>
           <div className="col-span-2 text-center">Aksi</div>
@@ -224,13 +223,15 @@ export default function LaporanPage() {
                 {/* 2. KATEGORI & BADGE JENIS (DIPERBAIKI) */}
                 <div className="col-span-2">
                   <div className="text-sm font-bold text-slate-800">{tx.category}</div>
-                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium mt-1 border ${
-                    tx.type === 'INCOME' 
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
-                      : "bg-rose-50 text-rose-700 border-rose-100"
-                  }`}>
-                    {tx.type === 'INCOME' ? "Masuk" : "Keluar"}
-                  </span>
+                  <div className="mt-1">
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                      tx.type === 'INCOME' 
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                        : "bg-rose-50 text-rose-700 border-rose-100"
+                    }`}>
+                      {tx.type === 'INCOME' ? "Masuk" : "Keluar"}
+                    </span>
+                  </div>
                 </div>
 
                 {/* 3. KETERANGAN */}
