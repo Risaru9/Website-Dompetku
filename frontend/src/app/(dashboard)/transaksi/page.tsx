@@ -204,7 +204,7 @@ export default function InputTransaksiPage() {
             </div>
           </div>
 
-          {/* 2. KATEGORI (DROPDOWN) */}
+          {/* 2. KATEGORI */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Kategori</label>
             <div className="relative">
@@ -242,11 +242,11 @@ export default function InputTransaksiPage() {
                 type="number"
                 placeholder="0"
                 min="1"
-                max="2000000000" // Batas HTML agar user sadar ada limit
+                max="2000000000"
                 value={amount}
                 onChange={(e) => {
                   const val = e.target.value;
-                  // Cegah input panjang berlebih (lebih dari 12 digit)
+                  // Cegah input panjang berlebih
                   if (val.length > 12) return;
                   if (val === "" || parseFloat(val) >= 0) setAmount(val);
                 }}
@@ -259,7 +259,7 @@ export default function InputTransaksiPage() {
             </div>
           </div>
 
-          {/* 4. KETERANGAN (OPSIONAL - DIUBAH DISINI) */}
+          {/* 4. KETERANGAN */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">
               Keterangan Tambahan <span className="text-slate-400 font-normal text-xs ml-1">(Opsional)</span>
@@ -274,7 +274,6 @@ export default function InputTransaksiPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all placeholder:text-slate-300 resize-none"
-                // PROP REQUIRED SUDAH DIHAPUS
               />
             </div>
           </div>
@@ -309,7 +308,7 @@ export default function InputTransaksiPage() {
             {loading ? (
               <>
                 <Loader2 size={20} className="animate-spin" />
-                Menyimpan...
+                Menyimpan
               </>
             ) : (
               "Simpan Transaksi"
