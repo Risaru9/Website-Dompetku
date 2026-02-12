@@ -4,11 +4,19 @@ const ExcelJS = require('exceljs');
 
 // 1. CREATE (Buat Baru)
 exports.createTransaction = async (req, res) => {
-  try {
+try {
     if (!req.user) return errorResponse(res, "Unauthorized", 401);
 
     const { type, amount, category, description, date } = req.body;
     const userId = req.user.id;
+
+    // VALIDASI TAMBAHAN
+    // Pastikan amount tidak lebih dari batas Integer PostgreSQL
+    // Kita set batas aman di 2 Miliar saja.
+    if (amount > 2000000000) {
+        return errorResponse(res, "Nominal terlalu besar (Maksimal 2 Miliar)", 400);
+    }
+    // -------------------------
 
     if (!type || !amount || !date || !category) {
       return errorResponse(res, "Field wajib diisi: type, amount, category, date", 400);

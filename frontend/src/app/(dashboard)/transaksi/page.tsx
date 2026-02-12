@@ -228,12 +228,14 @@ export default function InputTransaksiPage() {
                 <DollarSign size={18} />
               </div>
               <input
-                type="number"
+              type="number"
                 placeholder="0"
                 min="1"
+                max="2000000000"
                 value={amount}
                 onChange={(e) => {
                   const val = e.target.value;
+                  if (val.length > 10) return;
                   if (val === "" || parseFloat(val) >= 0) setAmount(val);
                 }}
                 onKeyDown={(e) => {
