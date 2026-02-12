@@ -15,7 +15,7 @@ import {
   ExternalLink,
   Tag 
 } from "lucide-react";
-import { api } from "@/lib/api"; // Ini akan otomatis pakai api.ts yang sudah kita perbaiki
+import { api } from "@/lib/api"; 
 import toast from "react-hot-toast";
 
 // DATABASE KATEGORI (TAXONOMY)
@@ -65,11 +65,21 @@ export default function InputTransaksiPage() {
     e.preventDefault();
     setLoading(true);
 
+    // 1. Validasi Nominal (Wajib diisi & Tidak boleh 0)
     if (!amount || Number(amount) <= 0) {
-      toast.error("Nominal tidak valid");
+      toast.error("Nominal harus diisi dan lebih dari 0");
       setLoading(false);
       return;
     }
+
+    // 2. Validasi Batas Atas (Mencegah Crash Database seperti sebelumnya)
+    if (Number(amount) > 2000000000) {
+       toast.error("Nominal terlalu besar (Maksimal 2 Miliar)");
+       setLoading(false);
+       return;
+    }
+
+    // 3. Validasi Kategori (Wajib diisi)
     if (!category) {
       toast.error("Mohon pilih kategori transaksi");
       setLoading(false);
@@ -77,19 +87,20 @@ export default function InputTransaksiPage() {
     }
 
     try {
-      // Mengirim data menggunakan api instance yang sudah membawa Token
+      // Mengirim data
       await api.post("/transactions", {
         type, 
         amount: Number(amount), 
         category,
-        description,
+        // LOGIKA BARU: Jika description kosong, kirim "-" agar database tetap rapi
+        description: description.trim() === "" ? "-" : description,
         date: new Date(date).toISOString(),
       });
 
       toast.success((t) => (
         <div className="flex flex-col gap-1">
           <span className="font-bold">Tercatat!</span>
-          <span className="text-xs text-slate-500">{category}: {description}</span>
+          <span className="text-xs text-slate-500">{category}</span>
           <Link
             href="/dashboard"
             className="text-blue-600 text-xs font-semibold flex items-center gap-1 mt-1 hover:underline"
@@ -228,14 +239,15 @@ export default function InputTransaksiPage() {
                 <DollarSign size={18} />
               </div>
               <input
-              type="number"
+                type="number"
                 placeholder="0"
                 min="1"
-                max="2000000000"
+                max="2000000000" // Batas HTML agar user sadar ada limit
                 value={amount}
                 onChange={(e) => {
                   const val = e.target.value;
-                  if (val.length > 10) return;
+                  // Cegah input panjang berlebih (lebih dari 12 digit)
+                  if (val.length > 12) return;
                   if (val === "" || parseFloat(val) >= 0) setAmount(val);
                 }}
                 onKeyDown={(e) => {
@@ -247,9 +259,11 @@ export default function InputTransaksiPage() {
             </div>
           </div>
 
-          {/* 4. KETERANGAN */}
+          {/* 4. KETERANGAN (OPSIONAL - DIUBAH DISINI) */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Keterangan Tambahan</label>
+            <label className="text-sm font-medium text-slate-700">
+              Keterangan Tambahan <span className="text-slate-400 font-normal text-xs ml-1">(Opsional)</span>
+            </label>
             <div className="relative">
               <div className="absolute left-3 top-4 text-slate-400">
                 <FileText size={18} />
@@ -260,7 +274,7 @@ export default function InputTransaksiPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all placeholder:text-slate-300 resize-none"
-                required
+                // PROP REQUIRED SUDAH DIHAPUS
               />
             </div>
           </div>
