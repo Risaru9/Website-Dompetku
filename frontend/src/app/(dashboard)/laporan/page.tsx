@@ -211,6 +211,16 @@ export default function LaporanPage() {
           <div className="col-span-2 text-center">Aksi</div>
         </div>
 
+{/* TABLE*/}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="col-span-2">Tanggal</div> 
+          <div className="col-span-2">Kategori</div>
+          <div className="col-span-4">Keterangan</div>
+          <div className="col-span-2 text-right">Nominal</div>
+          <div className="col-span-2 text-center">Aksi</div>
+        </div>
+
         <div className="divide-y divide-slate-50">
           {loading ? (
             <div className="p-10 text-center text-slate-400 text-sm">Memuat data...</div>
@@ -219,25 +229,31 @@ export default function LaporanPage() {
           ) : (
             filteredData.map((tx) => (
               <div key={tx.id} className="grid grid-cols-12 px-6 py-4 items-center hover:bg-slate-50 transition-colors group">
-                <div className="col-span-2 text-sm text-slate-500">
+                
+                <div className="col-span-2 text-sm text-slate-500 font-medium">
                   {new Date(tx.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "2-digit" })}
                 </div>
+
                 <div className="col-span-2">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium border ${
-                    tx.type === 'INCOME' ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100"
+                  <div className="text-sm font-semibold text-slate-700">{tx.category}</div>
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium mt-1 ${
+                    tx.type === 'INCOME' ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
                   }`}>
-                    {tx.type === 'INCOME' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
                     {tx.type === 'INCOME' ? "Masuk" : "Keluar"}
                   </span>
                 </div>
-                <div className="col-span-4 text-sm font-medium text-slate-700 truncate pr-4">
-                  {tx.description || tx.category}
+
+                <div className="col-span-4 text-sm text-slate-600 truncate pr-4 italic">
+                  {tx.description && tx.description !== "-" ? tx.description : <span className="text-slate-300">Tidak ada keterangan</span>}
                 </div>
+
                 <div className={`col-span-2 text-right text-sm font-bold ${
                    tx.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'
                 }`}>
                   {tx.type === 'INCOME' ? "+" : "-"}{formatRupiah(tx.amount)}
                 </div>
+
+                {/* 5. AKSI */}
                 <div className="col-span-2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => openEditModal(tx)} className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                     <Edit size={16} />
